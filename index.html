@@ -1,37 +1,199 @@
-<!DOCTYPE html>
+
+  <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FastScore</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FastScore</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#3b82f6" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="FastScore" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #020617; color: #f1f5f9; font-family: sans-serif; min-height: 100vh; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; padding:0 20px; height:52px; background:rgba(2,6,23,0.97); border-bottom:1px solid rgba(255,255,255,0.05); position:sticky; top:0; z-index:100; }
+    .logo { display:flex; align-items:center; gap:10px; }
+    .logo-fast { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:4px; color:#f1f5f9; }
+    .logo-score { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:4px; color:#3b82f6; }
+    .live-badge { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); border-radius:4px; padding:2px 8px; font-size:9px; color:#ef4444; font-family:'Space Mono',monospace; letter-spacing:1px; }
+    .clock { font-size:12px; font-family:'Space Mono',monospace; color:#475569; letter-spacing:1px; }
+    .ticker-wrap { background:rgba(239,68,68,0.1); border-top:1px solid rgba(239,68,68,0.3); border-bottom:1px solid rgba(239,68,68,0.3); overflow:hidden; height:32px; display:flex; align-items:center; position:relative; }
+    .ticker-label { position:absolute; left:0; background:#ef4444; padding:0 12px; height:100%; display:flex; align-items:center; font-size:10px; font-weight:900; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; color:white; z-index:2; }
+    .ticker-fade { position:absolute; left:0; top:0; bottom:0; width:80px; background:linear-gradient(90deg,#020617,transparent); z-index:1; }
+    .ticker-track { display:flex; gap:48px; padding-left:90px; white-space:nowrap; animation:scroll 40s linear infinite; }
+    .ticker-item { font-size:11px; color:#cbd5e1; font-family:'Space Mono',monospace; }
+    @keyframes scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    .filters { display:flex; gap:2px; padding:12px 16px 0; border-bottom:1px solid rgba(255,255,255,0.05); overflow-x:auto; }
+    .filter-btn { background:transparent; border:1px solid transparent; color:#475569; padding:6px 12px; border-radius:8px 8px 0 0; font-size:10px; cursor:pointer; font-family:'Space Mono',monospace; letter-spacing:1px; transition:all 0.2s; white-space:nowrap; }
+    .filter-btn.active { background:rgba(59,130,246,0.15); border-color:rgba(59,130,246,0.4); color:#60a5fa; }
+    .main { display:flex; gap:14px; padding:16px; max-width:1100px; margin:0 auto; }
+    .match-list { display:flex; flex-direction:column; gap:10px; width:340px; flex-shrink:0; }
+    .detail-panel { flex:1; }
+    .match-card { background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:14px 16px; cursor:pointer; transition:all 0.25s; }
+    .match-card:hover { border-color:rgba(59,130,246,0.3); }
+    .match-card.selected { background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(99,102,241,0.08)); border-color:rgba(59,130,246,0.5); box-shadow:0 0 20px rgba(59,130,246,0.15); transform:translateY(-1px); }
+    .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .league-name { font-size:10px; color:#64748b; font-family:'Space Mono',monospace; letter-spacing:1px; }
+    .live-dot-wrap { display:flex; align-items:center; gap:5px; }
+    .live-dot { width:8px; height:8px; border-radius:50%; background:#ef4444; box-shadow:0 0 8px #ef4444; animation:blink 1.2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1;box-shadow:0 0 8px #ef4444} 50%{opacity:0.3;box-shadow:none} }
+    .live-text { font-size:10px; color:#ef4444; font-family:'Space Mono',monospace; font-weight:700; letter-spacing:1px; }
+    .finished-text { font-size:10px; color:#475569; font-family:'Space Mono',monospace; letter-spacing:1px; }
+    .upcoming-text { font-size:10px; color:#f59e0b; font-family:'Space Mono',monospace; letter-spacing:1px; }
+    .teams-row { display:flex; align-items:center; justify-content:space-between; }
+    .team-name { font-size:15px; font-weight:700; color:#f1f5f9; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
+    .score-box { display:flex; gap:8px; align-items:center; padding:0 14px; }
+    .score-num { font-size:28px; font-weight:900; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; color:#f1f5f9; }
+    .score-sep { color:#334155; font-size:16px; }
+    .vs-text { font-size:13px; color:#475569; font-family:'Space Mono',monospace; padding:0 14px; }
+    .form-dots { display:flex; gap:2px; margin-top:3px; }
+    .form-dot { width:7px; height:7px; border-radius:50%; opacity:0.8; }
+    .pred-section { margin-top:10px; }
+    .pred-labels { display:flex; justify-content:space-between; font-size:10px; color:#94a3b8; margin-bottom:3px; font-family:'Space Mono',monospace; letter-spacing:1px; }
+    .pred-bar { display:flex; height:6px; border-radius:3px; overflow:hidden; gap:1px; }
+    .pred-home { background:linear-gradient(90deg,#3b82f6,#60a5fa); border-radius:3px 0 0 3px; }
+    .pred-draw { background:#475569; }
+    .pred-away { background:linear-gradient(90deg,#f97316,#fb923c); border-radius:0 3px 3px 0; }
+    .pred-label-ai { text-align:center; font-size:9px; color:#64748b; margin-top:2px; font-family:'Space Mono',monospace; }
+    .detail { background:rgba(2,6,23,0.85); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:24px; }
+    .detail-league { font-size:11px; color:#3b82f6; font-family:'Space Mono',monospace; letter-spacing:2px; margin-bottom:4px; }
+    .detail-teams { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .detail-team { font-size:24px; font-family:'Bebas Neue',sans-serif; letter-spacing:3px; }
+    .detail-score { font-size:34px; font-family:'Bebas Neue',sans-serif; letter-spacing:4px; }
+    .detail-kickoff { font-size:18px; font-family:'Space Mono',monospace; color:#f59e0b; }
+    .divider { width:100%; height:1px; background:rgba(255,255,255,0.05); margin-bottom:16px; }
+    .ai-box { background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.05)); border:1px solid rgba(59,130,246,0.2); border-radius:12px; padding:16px; margin-bottom:16px; }
+    .ai-title { font-size:10px; color:#3b82f6; font-family:'Space Mono',monospace; letter-spacing:2px; margin-bottom:12px; }
+    .ai-probs { display:flex; justify-content:space-around; margin-bottom:14px; }
+    .ai-prob-item { text-align:center; }
+    .ai-pct { font-size:28px; font-weight:900; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
+    .ai-team-label { font-size:10px; color:#64748b; font-family:'Space Mono',monospace; }
+    .ai-text { font-size:11px; color:#94a3b8; font-family:'Space Mono',monospace; line-height:1.6; }
+    .form-section { display:flex; justify-content:space-between; margin-bottom:16px; }
+    .form-col-label { font-size:10px; color:#64748b; font-family:'Space Mono',monospace; letter-spacing:1px; margin-bottom:6px; }
+    .form-boxes { display:flex; gap:3px; }
+    .form-box { width:20px; height:20px; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; font-family:'Space Mono',monospace; }
+    .events-title { font-size:10px; color:#475569; font-family:'Space Mono',monospace; letter-spacing:2px; margin-bottom:10px; }
+    .event-row { display:flex; align-items:center; margin-bottom:8px; }
+    .event-row.home { justify-content:flex-start; }
+    .event-row.away { justify-content:flex-end; }
+    .event-pill { border-radius:6px; padding:4px 10px; font-size:11px; font-family:'Space Mono',monospace; }
+    .event-goal { background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.2); color:#22c55e; }
+    .event-yellow { background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.2); color:#eab308; }
+    .event-red { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.2); color:#ef4444; }
+    .event-min { font-size:10px; color:#475569; font-family:'Space Mono',monospace; min-width:28px; text-align:center; margin:0 6px; }
+    .no-events { text-align:center; color:#334155; font-size:12px; padding:20px 0; font-family:'Space Mono',monospace; }
+    @media(max-width:700px){ .main{flex-direction:column} .match-list{width:100%} }
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">
+    <span class="logo-fast">⚡ FAST</span>
+    <span class="logo-score">SCORE</span>
+    <span class="live-badge">3 EN DIRECT</span>
+  </div>
+  <span class="clock" id="clock">--:--:--</span>
+</div>
+<div class="ticker-wrap">
+  <div class="ticker-label">DIRECT</div>
+  <div class="ticker-fade"></div>
+  <div class="ticker-track">
+    <span class="ticker-item">⚽ PSG 2-1 Marseille (67') — Asensio double la mise !</span>
+    <span class="ticker-item">🔴 Arsenal 1-1 Man City (34') — Haaland égalise sur penalty</span>
+    <span class="ticker-item">⭐ Bayern 3-2 Dortmund (FT) — Kane double buteur !</span>
+    <span class="ticker-item">🔮 PRÉVISION: Real vs Barça — El Clasico, 44% faveur Madrid</span>
+    <span class="ticker-item">⚽ Inter 2-2 Juventus (89') — Derby électrique !</span>
+    <span class="ticker-item">📊 Monaco favori à 51% contre Lyon ce soir</span>
+    <span class="ticker-item">⚽ PSG 2-1 Marseille (67') — Asensio double la mise !</span>
+    <span class="ticker-item">🔴 Arsenal 1-1 Man City (34') — Haaland égalise sur penalty</span>
+    <span class="ticker-item">⭐ Bayern 3-2 Dortmund (FT) — Kane double buteur !</span>
+    <span class="ticker-item">🔮 PRÉVISION: Real vs Barça — El Clasico, 44% faveur Madrid</span>
+    <span class="ticker-item">⚽ Inter 2-2 Juventus (89') — Derby électrique !</span>
+    <span class="ticker-item">📊 Monaco favori à 51% contre Lyon ce soir</span>
+  </div>
+</div>
+<div class="filters">
+  <button class="filter-btn active" onclick="setFilter('all',this)">TOUS</button>
+  <button class="filter-btn" onclick="setFilter('live',this)">🔴 EN DIRECT</button>
+  <button class="filter-btn" onclick="setFilter('upcoming',this)">⏰ À VENIR</button>
+  <button class="filter-btn" onclick="setFilter('finished',this)">✓ TERMINÉS</button>
+</div>
+<div class="main">
+  <div class="match-list" id="match-list"></div>
+  <div class="detail-panel" id="detail-panel"></div>
+</div>
+<script>
+const MATCHES=[
+  {id:1,league:"Ligue 1",flag:"🇫🇷",status:"live",minute:67,stadium:"Parc des Princes",
+   home:{name:"PSG",score:2,form:["W","W","D","W","W"]},away:{name:"Marseille",score:1,form:["L","W","W","D","L"]},
+   pred:{h:72,d:16,a:12},events:[{min:23,team:"home",type:"goal",player:"Mbappé"},{min:41,team:"away",type:"goal",player:"Aubameyang"},{min:58,team:"home",type:"goal",player:"Asensio"},{min:62,team:"away",type:"yellow",player:"Guendouzi"}]},
+  {id:2,league:"Premier League",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",status:"live",minute:34,stadium:"Emirates Stadium",
+   home:{name:"Arsenal",score:1,form:["W","W","W","D","W"]},away:{name:"Man City",score:1,form:["W","D","W","W","L"]},
+   pred:{h:38,d:29,a:33},events:[{min:11,team:"home",type:"goal",player:"Saka"},{min:28,team:"away",type:"goal",player:"Haaland"}]},
+  {id:3,league:"La Liga",flag:"🇪🇸",status:"upcoming",kickoff:"21:00",stadium:"Santiago Bernabéu",
+   home:{name:"Real Madrid",score:null,form:["W","W","W","W","D"]},away:{name:"Barcelona",score:null,form:["W","W","L","W","W"]},
+   pred:{h:44,d:23,a:33},events:[]},
+  {id:4,league:"Champions League",flag:"⭐",status:"finished",stadium:"Allianz Arena",
+   home:{name:"Bayern",score:3,form:["W","W","D","W","W"]},away:{name:"Dortmund",score:2,form:["L","W","W","D","L"]},
+   pred:{h:61,d:18,a:21},events:[{min:7,team:"home",type:"goal",player:"Kane"},{min:19,team:"away",type:"goal",player:"Fullkrug"},{min:44,team:"home",type:"goal",player:"Sané"},{min:67,team:"away",type:"goal",player:"Adeyemi"},{min:81,team:"home",type:"goal",player:"Kane"}]},
+  {id:5,league:"Ligue 1",flag:"🇫🇷",status:"upcoming",kickoff:"19:00",stadium:"Stade Louis-II",
+   home:{name:"Monaco",score:null,form:["W","D","W","W","L"]},away:{name:"Lyon",score:null,form:["D","W","L","W","D"]},
+   pred:{h:51,d:25,a:24},events:[]},
+  {id:6,league:"Serie A",flag:"🇮🇹",status:"live",minute:89,stadium:"San Siro",
+   home:{name:"Inter Milan",score:2,form:["W","W","W","D","W"]},away:{name:"Juventus",score:2,form:["D","W","W","L","W"]},
+   pred:{h:55,d:27,a:18},events:[{min:22,team:"home",type:"goal",player:"Lautaro"},{min:38,team:"away",type:"goal",player:"Vlahovic"},{min:71,team:"home",type:"goal",player:"Thuram"},{min:85,team:"away",type:"goal",player:"Chiesa"}]}
+];
 
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#3b82f6" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="FastScore" />
+let filter='all', selId=1;
+const fc=r=>r==='W'?'#22c55e':r==='D'?'#eab308':'#ef4444';
+const fb=r=>r==='W'?'rgba(34,197,94,0.2)':r==='D'?'rgba(234,179,8,0.2)':'rgba(239,68,68,0.2)';
 
-    <!-- Icônes -->
-    <link rel="apple-touch-icon" href="/icon-192.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+function render(){
+  const list=filter==='all'?MATCHES:MATCHES.filter(m=>m.status===filter);
+  document.getElementById('match-list').innerHTML=list.map(m=>{
+    const sel=m.id===selId?' selected':'';
+    const dots=(form,right)=>`<div class="form-dots" style="${right?'justify-content:flex-end':''}">${form.map(r=>`<div class="form-dot" style="background:${fc(r)}"></div>`).join('')}</div>`;
+    const scoreOrVs=m.status==='upcoming'?`<span class="vs-text">vs</span>`:`<div class="score-box"><span class="score-num">${m.home.score}</span><span class="score-sep">—</span><span class="score-num">${m.away.score}</span></div>`;
+    const status=m.status==='live'?`<div class="live-dot-wrap"><div class="live-dot"></div><span class="live-text">LIVE ${m.minute}'</span></div>`:m.status==='finished'?`<span class="finished-text">TERMINÉ</span>`:`<span class="upcoming-text">⏰ ${m.kickoff}</span>`;
+    return `<div class="match-card${sel}" onclick="sel(${m.id})">
+      <div class="card-header"><span class="league-name">${m.flag} ${m.league.toUpperCase()}</span>${status}</div>
+      <div class="teams-row"><div><div class="team-name">${m.home.name}</div>${dots(m.home.form,false)}</div>${scoreOrVs}<div style="text-align:right"><div class="team-name">${m.away.name}</div>${dots(m.away.form,true)}</div></div>
+      <div class="pred-section"><div class="pred-labels"><span>DOM ${m.pred.h}%</span><span>NUL ${m.pred.d}%</span><span>${m.pred.a}% EXT</span></div><div class="pred-bar"><div class="pred-home" style="width:${m.pred.h}%"></div><div class="pred-draw" style="width:${m.pred.d}%"></div><div class="pred-away" style="width:${m.pred.a}%"></div></div><div class="pred-label-ai">PRÉVISION IA</div></div>
+    </div>`;
+  }).join('');
+  const m=MATCHES.find(m=>m.id===selId)||list[0];
+  if(!m){document.getElementById('detail-panel').innerHTML='';return;}
+  const dom=m.pred.h>m.pred.a?m.home.name:m.away.name;
+  const domPct=Math.max(m.pred.h,m.pred.a);
+  const aiTxt=m.status==='upcoming'?`L'IA prédit une victoire probable de ${dom} (${domPct}%). Basé sur la forme récente et les stats de saison.`:m.status==='live'?`En cours : ${dom} reste favori à ${domPct}% malgré le score actuel.`:`Résultat confirmé. La prévision initiale donnait ${dom} favori à ${domPct}%.`;
+  const scoreEl=m.status==='upcoming'?`<span class="detail-kickoff">${m.kickoff}</span>`:`<span class="detail-score">${m.home.score} — ${m.away.score}</span>`;
+  const fbox=form=>form.map(r=>`<div class="form-box" style="background:${fb(r)};border:1px solid ${fc(r)}44;color:${fc(r)}">${r}</div>`).join('');
+  const evts=m.events.length===0?`<div class="no-events">Aucun événement encore</div>`:[...m.events].reverse().map(ev=>{
+    const cls=ev.type==='goal'?'event-goal':ev.type==='yellow'?'event-yellow':'event-red';
+    const ic=ev.type==='goal'?'⚽':ev.type==='yellow'?'🟨':'🟥';
+    return `<div class="event-row ${ev.team}"><span class="event-pill ${cls}">${ic} ${ev.player}</span><span class="event-min">${ev.min}'</span></div>`;
+  }).join('');
+  document.getElementById('detail-panel').innerHTML=`<div class="detail">
+    <div class="detail-league">${m.flag} ${m.league.toUpperCase()} · ${m.stadium}</div>
+    <div class="detail-teams"><span class="detail-team">${m.home.name}</span>${scoreEl}<span class="detail-team">${m.away.name}</span></div>
+    <div class="divider"></div>
+    <div class="ai-box"><div class="ai-title">🔮 ANALYSE IA</div>
+      <div class="ai-probs"><div class="ai-prob-item"><div class="ai-pct" style="color:#3b82f6">${m.pred.h}%</div><div class="ai-team-label">${m.home.name.toUpperCase()}</div></div><div class="ai-prob-item"><div class="ai-pct" style="color:#64748b">${m.pred.d}%</div><div class="ai-team-label">NUL</div></div><div class="ai-prob-item"><div class="ai-pct" style="color:#f97316">${m.pred.a}%</div><div class="ai-team-label">${m.away.name.toUpperCase()}</div></div></div>
+      <div class="ai-text">${aiTxt}</div></div>
+    <div class="form-section"><div><div class="form-col-label">FORME RÉCENTE</div><div class="form-boxes">${fbox(m.home.form)}</div></div><div style="text-align:right"><div class="form-col-label">FORME RÉCENTE</div><div class="form-boxes" style="justify-content:flex-end">${fbox(m.away.form)}</div></div></div>
+    <div class="events-title">ÉVÉNEMENTS</div>${evts}
+  </div>`;
+}
 
-    <!-- SEO -->
-    <meta name="description" content="Résultats football en direct avec prévisions IA" />
-  </head>
-  <body>
-    <div id="root"></div>
-
-    <script>
-      // Enregistrement du Service Worker
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
-            .then(reg => console.log('FastScore SW enregistré:', reg.scope))
-            .catch(err => console.log('FastScore SW erreur:', err));
-        });
-      }
-    </script>
-  </body>
-</html>
+function sel(id){selId=id;render();}
+function setFilter(f,btn){filter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');render();}
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR');},1000);
+render();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+</script>
+</body>
+</html>    // Enregistrement
